@@ -8,12 +8,12 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ktor.server.routing.*
 import io.ktor.server.application.*
 import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
-import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.sync.withLock
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -84,15 +84,20 @@ private suspend fun handleMobileFrame(conn: MobileConnection, ubiquitousHandler:
                 .failOnUnknown()
                 .fromJson(text)!!
 
-            for (ubConn in ubiquitousHandler.getConnections()) {
-                val ubConfig = ubConn.config ?: continue
+            val ub = ubiquitousHandler.getConnections()
+                .find { it.config != null && it.config!!.publicKey == config.publicKey }
 
-                if (ubConfig.publicKey == config.publicKey) {
-                    conn.config = MobileConnectionConfiguration(config.publicKey, ubConn)
-                    ubConfig.mobileConnections.add(conn)
-                    break
-                }
+            if (ub == null) {
+                conn.session.close(CloseReason(
+                    code = CloseReason.Codes.CANNOT_ACCEPT,
+                    message = "No such ubiquitous system"
+                ))
+
+                continue
             }
+
+            conn.config = MobileConnectionConfiguration(config.publicKey, ub)
+            ub.config!!.mobileConnections.add(conn)
         } else {
             val data = moshi.adapter<ThresholdPacket>()
                 .fromJson(text)
