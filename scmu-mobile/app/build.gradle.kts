@@ -81,6 +81,11 @@ dependencies {
     implementation("io.ktor:ktor-client-websockets:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
+    implementation("com.juul.kable:core:0.17.1")
+
+    implementation("com.ensarsarajcic.kotlinx:serialization-msgpack:0.5.1}")
+    implementation("com.ensarsarajcic.kotlinx:serialization-msgpack-unsigned-support:0.5.1")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")

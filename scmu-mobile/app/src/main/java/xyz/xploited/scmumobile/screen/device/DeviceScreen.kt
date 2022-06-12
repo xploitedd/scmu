@@ -303,10 +303,10 @@ private fun ConfigurationSection(
 
     val updateAllValues = {
         coroutineScope.launch {
-            val new = thresholds.value.copy(
-                rainThreshold = currentRainThreshold,
-                pm25Threshold = currentPM25Threshold,
-                pm10Threshold = currentPM10Threshold
+            val new = thresholds.value.changed(
+                newRain = currentRainThreshold,
+                newPM25 = currentPM25Threshold,
+                newPM10 = currentPM10Threshold
             )
 
             updateThresholds(new)

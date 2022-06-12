@@ -2,14 +2,7 @@ package xyz.xploited.scmumobile.screen.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.Build
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,19 +17,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import xyz.xploited.scmumobile.MobileApplication
+import com.juul.kable.Advertisement
 import xyz.xploited.scmumobile.screen.Screen
 import xyz.xploited.scmumobile.ui.common.Card
 import xyz.xploited.scmumobile.ui.common.Container
@@ -55,38 +52,22 @@ val BluetoothScreen = Screen(
 @SuppressLint("MissingPermission")
 @Composable
 fun BluetoothScreenView(
-    btScannerViewModel: BluetoothScannerViewModel = viewModel(LocalContext.current as ComponentActivity),
+    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+    btViewModel: BluetoothViewModel = viewModel(LocalContext.current as ComponentActivity),
     navigateToConfig: (String) -> Unit
 ) {
-    val context = LocalContext.current as ComponentActivity
-    val application = context.application as MobileApplication
-    val blAdapter = application.bluetoothAdapter
-
     WithBluetoothPermissions {
-        RegisterBluetoothReceiver(context, btScannerViewModel)
+        var devices by remember { mutableStateOf(emptyList<Advertisement>()) }
+        DisposableEffect(lifecycleOwner) {
+            val liveData = btViewModel.startSearch()
 
-        val searching: Boolean by btScannerViewModel.searching
-            .observeAsState(initial = false)
-
-        val devices: Set<BluetoothDevice> by btScannerViewModel.bluetoothDevices
-            .observeAsState(initial = emptySet())
-
-        LaunchedEffect(searching) {
-            Log.d("BluetoothScreen", "searching: $searching, isDiscovering: ${blAdapter.isDiscovering}")
-            if (searching && !blAdapter.isDiscovering) {
-                Log.d("BluetoothScreen", "starting discovery")
-                blAdapter.startDiscovery()
-            } else if (!searching && blAdapter.isDiscovering) {
-                Log.d("BluetoothScreen", "stopping discovery")
-                blAdapter.cancelDiscovery()
+            liveData.observe(lifecycleOwner) {
+                devices = it
             }
-        }
-
-        DisposableEffect(Unit) {
-            btScannerViewModel.startSearch()
 
             onDispose {
-                btScannerViewModel.stopSearch()
+                liveData.removeObservers(lifecycleOwner)
+                btViewModel.stopSearch()
             }
         }
 
@@ -103,7 +84,7 @@ fun BluetoothScreenView(
                 items(filteredDevices) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        title = it.name,
+                        title = it.name!!,
                         onClick = { navigateToConfig(it.address) }
                     )
                 }
@@ -114,7 +95,7 @@ fun BluetoothScreenView(
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun WithBluetoothPermissions(
+fun WithBluetoothPermissions(
     onPermissions: @Composable () -> Unit
 ) {
     val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -159,40 +140,6 @@ private fun WithBluetoothPermissions(
 
         LaunchedEffect(bluetoothPermissions) {
             bluetoothPermissions.launchMultiplePermissionRequest()
-        }
-    }
-}
-
-@Composable
-private fun RegisterBluetoothReceiver(
-    context: Context,
-    btScannerViewModel: BluetoothScannerViewModel
-) {
-    DisposableEffect(context, btScannerViewModel) {
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(BluetoothDevice.ACTION_FOUND)
-        intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        val broadcast = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                when (intent.action) {
-                    BluetoothDevice.ACTION_FOUND -> {
-                        val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                        if (device != null) {
-                            Log.d("BluetoothScreen", "New bluetooth device ${device.address}")
-                            btScannerViewModel.addBluetoothDevice(device)
-                        }
-                    }
-                    BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> btScannerViewModel.resetBluetoothSearch()
-                }
-            }
-        }
-
-        context.registerReceiver(broadcast, intentFilter)
-        Log.d("BluetoothScreen", "registered")
-
-        onDispose {
-            context.unregisterReceiver(broadcast)
-            Log.d("BluetoothScreen", "unregistered")
         }
     }
 }

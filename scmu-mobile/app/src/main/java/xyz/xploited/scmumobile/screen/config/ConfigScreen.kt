@@ -1,20 +1,22 @@
 package xyz.xploited.scmumobile.screen.config
 
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothGattCallback
-import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import xyz.xploited.scmumobile.screen.Screen
-import xyz.xploited.scmumobile.screen.bluetooth.BluetoothScannerViewModel
+import xyz.xploited.scmumobile.screen.bluetooth.BluetoothViewModel
 import xyz.xploited.scmumobile.screen.bluetooth.BluetoothScreen
+import xyz.xploited.scmumobile.screen.bluetooth.WithBluetoothPermissions
 
 val ConfigScreen = Screen(
     route = "config/{bluetoothAddress}",
@@ -28,30 +30,39 @@ val ConfigScreen = Screen(
             ConfigScreenView(
                 bluetoothAddress = it.arguments?.getString("bluetoothAddress")!!,
                 navigateToBluetooth = {
-                    navHost.popBackStack()
+                    navHost.popBackStack(BluetoothScreen.route, inclusive = false)
                 }
             )
         }
     }
 )
 
-@SuppressLint("MissingPermission")
 @Composable
 fun ConfigScreenView(
     bluetoothAddress: String,
     navigateToBluetooth: () -> Unit,
-    btScannerViewModel: BluetoothScannerViewModel = viewModel(LocalContext.current as ComponentActivity)
+    btViewModel: BluetoothViewModel = viewModel(LocalContext.current as ComponentActivity)
 ) {
     val context = LocalContext.current as ComponentActivity
-    val blDevice = btScannerViewModel.getBluetoothDeviceByAddress(bluetoothAddress)
+    val blDevice = btViewModel.getBluetoothAdvertisement(bluetoothAddress)
 
     if (blDevice == null) {
         LaunchedEffect(Unit) {
             navigateToBluetooth()
         }
     } else {
-        blDevice.connectGatt(context, true, object : BluetoothGattCallback() {
+        WithBluetoothPermissions {
+            btViewModel.connect(blDevice)
 
-        })
+            val wifiNetworks by btViewModel.getWifiNetworks()
+                .observeAsState(initial = emptyList())
+
+            LazyColumn {
+                items(wifiNetworks) {
+                    Text(text = it.ssid)
+                }
+            }
+        }
     }
 }
+
