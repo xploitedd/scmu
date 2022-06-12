@@ -11,10 +11,13 @@ import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -117,6 +120,7 @@ private fun WithBluetoothPermissions(
     val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         rememberMultiplePermissionsState(permissions = listOf(
             Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_CONNECT,
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -124,7 +128,10 @@ private fun WithBluetoothPermissions(
         ))
     } else {
         rememberMultiplePermissionsState(permissions = listOf(
-            Manifest.permission.BLUETOOTH
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ))
     }
 
@@ -147,7 +154,6 @@ private fun WithBluetoothPermissions(
                 TextButton(onClick = { bluetoothPermissions.launchMultiplePermissionRequest() }) {
                     Text(text = "Grant Permissions")
                 }
-
             }
         }
 

@@ -57,17 +57,23 @@ data class WifiPacket(
 data class ThresholdPacket(
     @Json(name = "rain_threshold")
     val rainThreshold: Int,
-    @Json(name = "pm_threshold")
-    val pmThreshold: Int,
-    val signature: String
+    @Json(name = "pm_25_threshold")
+    val pm25Threshold: Int,
+    @Json(name = "pm_10_threshold")
+    val pm10Threshold: Int,
+    val signature: String? = null
 )
 
 @JsonClass(generateAdapter = false)
 data class InfoPacket(
     val thresholds: ThresholdPacket,
     val wifi: WifiPacket,
+    @Json(name = "is_closed")
+    val isClosed: Boolean,
     @Json(name = "is_raining")
     val isRaining: Boolean,
-    @Json(name = "is_particle_matter")
-    val isParticleMatter: Boolean
+    @Json(name = "pm_25_level")
+    val pm25Level: Int,
+    @Json(name = "pm_10_level")
+    val pm10Level: Int
 )

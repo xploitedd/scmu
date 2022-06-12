@@ -14,6 +14,9 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.send
 import kotlinx.coroutines.isActive
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("Routing")
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -25,6 +28,10 @@ fun Application.configureWebsocket() {
             connectionProducer = { id, session -> UbiquitousConnection(id, session) },
             handleFrames = ::handleUbiquitousFrame,
             onDisconnect = {
+                it.config?.mobileConnections?.forEach { mobile ->
+                    mobile.session.close()
+                }
+
                 // TODO: send notification to all
             }
         )
@@ -84,10 +91,13 @@ private suspend fun handleMobileFrame(conn: MobileConnection, ubiquitousHandler:
                 .failOnUnknown()
                 .fromJson(text)!!
 
+            log.info("Received mobile configuration request from ${conn.id} with public key ${config.publicKey}")
+
             val ub = ubiquitousHandler.getConnections()
                 .find { it.config != null && it.config!!.publicKey == config.publicKey }
 
             if (ub == null) {
+                log.warn("No ubiquitous systems are registered with public key ${config.publicKey}")
                 conn.session.close(CloseReason(
                     code = CloseReason.Codes.CANNOT_ACCEPT,
                     message = "No such ubiquitous system"

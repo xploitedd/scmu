@@ -2,7 +2,6 @@ package xyz.xploited.scmumobile.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +16,7 @@ import androidx.compose.ui.unit.sp
 fun Card(
     modifier: Modifier = Modifier,
     title: String,
+    subtitle: String? = null,
     onClick: () -> Unit = {}
 ) {
     Column(
@@ -25,7 +25,7 @@ fun Card(
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = RoundedCornerShape(4.dp)
             )
-            .padding(horizontal = 8.dp, vertical = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 16.dp)
             .clickable { onClick() }
     ) {
         Text(
@@ -33,5 +33,13 @@ fun Card(
             color = MaterialTheme.colorScheme.onSecondaryContainer,
             fontSize = 20.sp
         )
+
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontSize = 12.sp
+            )
+        }
     }
 }
