@@ -153,7 +153,7 @@ private fun DeviceDetails(
             } else if (it.isError) {
                 val error = (it as StateResult.Error<DeviceIncomingData>).error
                 Log.e("DeviceScreen", "An error occurred while consuming from the websocket", error)
-                popUpToMain()
+                // popUpToMain()
             }
         }
 
@@ -286,10 +286,6 @@ private fun ConfigurationSection(
     thresholds: Timestamped<DeviceThresholds>,
     updateThresholds: suspend (DeviceThresholds) -> Unit
 ) {
-    var currentRainThreshold by rememberSaveable {
-        mutableStateOf(thresholds.value.rainThreshold)
-    }
-
     var currentPM25Threshold by rememberSaveable {
         mutableStateOf(thresholds.value.pm25Threshold)
     }
@@ -304,7 +300,6 @@ private fun ConfigurationSection(
     val updateAllValues = {
         coroutineScope.launch {
             val new = thresholds.value.changed(
-                newRain = currentRainThreshold,
                 newPM25 = currentPM25Threshold,
                 newPM10 = currentPM10Threshold
             )
@@ -316,7 +311,6 @@ private fun ConfigurationSection(
 
     LaunchedEffect(thresholds) {
         if (!editing) {
-            currentRainThreshold = thresholds.value.rainThreshold
             currentPM25Threshold = thresholds.value.pm25Threshold
             currentPM10Threshold = thresholds.value.pm10Threshold
         }
@@ -325,18 +319,6 @@ private fun ConfigurationSection(
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SliderWidget(
-            title = "Rain Threshold",
-            currentValue = currentRainThreshold,
-            minValue = 0,
-            maxValue = 1023,
-            setValue = {
-                editing = true
-                currentRainThreshold = it
-            },
-            finishUpdate = { updateAllValues() }
-        )
-
         SliderWidget(
             title = "PM2.5 Threshold",
             currentValue = currentPM25Threshold,

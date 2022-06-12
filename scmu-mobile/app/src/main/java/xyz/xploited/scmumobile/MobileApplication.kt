@@ -26,11 +26,8 @@ class MobileApplication : Application() {
         ).fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
-                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('test1', 'test1_ma', 'test1_pk')")
-                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('test2', 'test2_ma', 'test2_pk')")
-                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('test3', 'test3_ma', 'test3_pk')")
-                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('test4', 'test4_ma', 'test4_pk')")
-                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('test5', 'test5_ma', 'test5_pk')")
+                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('cozinha', '20:16:B9:43:24:83', 'test1_pk')")
+                    db.execSQL("insert into devices (device_name, mac_address, public_key) values ('quarto', '20:16:B9:43:24:84', 'test2_pk')")
                 }
             })
             .build()

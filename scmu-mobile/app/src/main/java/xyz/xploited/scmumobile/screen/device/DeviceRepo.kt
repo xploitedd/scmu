@@ -23,8 +23,6 @@ data class DeviceWifiData(
 @kotlinx.serialization.Serializable
 @Parcelize
 data class DeviceThresholds(
-    @SerialName("rain_threshold")
-    val rainThreshold: Int,
     @SerialName("pm_25_threshold")
     val pm25Threshold: Int,
     @SerialName("pm_10_threshold")
@@ -33,12 +31,10 @@ data class DeviceThresholds(
 ) : Parcelable
 
 fun DeviceThresholds.changed(
-    newRain: Int? = null,
     newPM25: Int? = null,
     newPM10: Int? = null,
     newSignature: String? = null
 ) = DeviceThresholds(
-    newRain ?: rainThreshold,
     newPM25 ?: pm25Threshold,
     newPM10 ?: pm10Threshold,
     newSignature ?: signature
